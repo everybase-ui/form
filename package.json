@@ -15,7 +15,9 @@
   ],
   "scripts": {
     "build": "rslib build",
-    "dev": "rslib build --watch",
+    "dev:lib": "rslib build --watch",
+    "dev:examples": "pnpm -F everybase-form-examples dev",
+    "dev": "pnpm run /dev:.*/",
     "test": "vitest run"
   },
   "devDependencies": {
