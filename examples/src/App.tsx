@@ -1,4 +1,3 @@
-import './App.css';
 import { Button } from '@everybase/form'
 
 const App = () => {
