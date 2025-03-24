@@ -13,7 +13,7 @@ const App = () => {
           <li key={idx} className="py-12">
             <h3 className="text-2xl font-bold">{Example.title}</h3>
             <p className="mt-2 text-lg text-gray-600">{Example.description}</p>
-            <div className="mt-8">
+            <div className="mt-8 max-w-md bg-gray-100 p-8 rounded-lg">
               <Example />
             </div>
           </li>
