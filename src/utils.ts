@@ -2,15 +2,6 @@ type Key = string | number
 type ArrayKey = `[${number}]`
 
 type JoinPath<P1 extends Key, P2 extends Key> = `${P1}${P2 extends `[${number}]${string}` ? P2 : `.${P2}`}`
-type DottedPath<P extends string, Root = true> = P extends `${infer P1}[${infer K}]${infer P3}`
-    ? K extends `${number}`
-        ? Root extends true
-            ? P1 extends ''
-                ? `[${K}]${DottedPath<P3, false>}`
-                : `${P1}.[${K}]${DottedPath<P3, false>}`
-            : `${P1}.[${K}]${DottedPath<P3, false>}`
-        : P
-    : P
 
 export type PathOf<T> = T extends object ? (
     T extends Array<infer I> ? (
@@ -24,27 +15,37 @@ export type PathOf<T> = T extends object ? (
     )
 ) : never
 
-type ValueInDottedPath<T, P extends DottedPath<PathOf<T>>> = P extends `${infer K}.${infer P1}`
-    ? K extends `[${number}]`
-        ? T extends Array<infer I>
-            ? P1 extends DottedPath<PathOf<I>>
-                ? ValueInDottedPath<I, P1>
-                : never
-            : never
-        : K extends keyof T
-            ? P1 extends DottedPath<PathOf<T[K]>>
-                ? ValueInDottedPath<T[K], P1>
-                : never
-            : never
-    : P extends `[${number}]`
-        ? T extends Array<infer I>
-            ? I
-            : never
-        : P extends keyof T
-            ? T[P]
-            : never
+type SplitArrayPath<P extends string> = P extends `${infer P1}[${number}]${infer P3}`
+    ? P extends `${P1}${infer P2}${P3}`
+        ? P1 extends ''
+            ? [P2, P3]
+            : [P1, `${P2}${P3}`]
+        : never
+    : [P, '']
 
-export type ValueIn<T, P extends PathOf<T>> = ValueInDottedPath<T, DottedPath<P>>
+    type SplitPath<P extends string> = P extends `${infer P1}.${infer P2}`
+    ? SplitArrayPath<P1> extends [`${infer C1}`, `${infer C2}`]
+        ? [C1, `${C2}${C2 extends '' ? '' : '.'}${P2}`]
+        : never
+    : SplitArrayPath<P>
+
+export type ValueIn<T, P extends PathOf<T>> = SplitPath<P> extends [infer P1, infer P2]
+    ? P1 extends `[${number}]`
+        ? T extends Array<infer I>
+            ? P2 extends ''
+                ? I
+                : P2 extends PathOf<I>
+                    ? ValueIn<I, P2>
+                    : P2
+            : never
+        : P1 extends keyof T
+            ? P2 extends ''
+                ? T[P1]
+                : P2 extends PathOf<T[P1]>
+                    ? ValueIn<T[P1], P2>
+                    : never
+            : never
+    : never
 
 const ARRAY_KEY_REGEX = /^\[(\d+)\]$/
 const NON_LEADING_ARRAY_KEY_REGEX = /(?!^)\[\d+\]/g
