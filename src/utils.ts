@@ -47,15 +47,24 @@ export type ValueIn<T, P extends PathOf<T>> = SplitPath<P> extends [infer P1, in
             : never
     : never
 
-const ARRAY_KEY_REGEX = /\[(\d+)\]/
-const OBJECT_KEY_REGEX = /\.(.*)/
-
 export function getIn<T, P extends PathOf<T>>(object: T, path: P): ValueIn<T, P> {
     const [p1, p2] = splitPath(path)
     const { key } = parseSegment(p1)
     const value = object[key as keyof T]
     return p2 ? getIn(value, p2 as PathOf<T[keyof T]>) : value as ValueIn<T, P>
 }
+
+export function setIn<T, P extends PathOf<T>>(object: T, path: P, value: ValueIn<T, P>): T {
+    let newObject: any = object
+    const [p1, p2] = splitPath(path)
+    const { key, isArray } = parseSegment(p1)
+    newObject = isArray ?[...newObject] : {...newObject}
+    newObject[key] = p2 ? setIn(newObject[key], p2, value) : value
+    return newObject
+}
+
+const ARRAY_KEY_REGEX = /\[(\d+)\]/
+const OBJECT_KEY_REGEX = /\.(.*)/
 
 function splitPath<P extends string>(path: P) {
     const [p1, p2] = path.split(OBJECT_KEY_REGEX)

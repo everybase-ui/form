@@ -1,4 +1,4 @@
-import { getIn } from '../src/utils'
+import { getIn, setIn } from '../src/utils'
 import type { PathOf, ValueIn } from '../src/utils'
 
 const starships = [
@@ -88,5 +88,30 @@ describe('getIn', () => {
         expect(getIn(characters, '[0].starships[2].name')).toBe('Jedi Interceptor')
         expect(getIn(characters, '[0].starships[0].length')).toBe(11)
         expect(getIn(characters, '[0].starships[1].cargo_capacity')).toBe(50000000)
+    })
+})
+
+describe('setIn', () => {
+    it('returns new object with corresponding value', () => {
+        let newCharacter = setIn(character, 'name', 'Luke Skywalker')
+        expect(newCharacter).not.toBe(character)
+        expect(newCharacter.name).toBe('Luke Skywalker')
+
+        newCharacter = setIn(newCharacter, 'wife.name', 'Mara Jade Skywalker')
+        expect(newCharacter.wife.name).toBe('Mara Jade Skywalker')
+
+        newCharacter = setIn(newCharacter, 'starships[0].name', 'X-wing')
+        expect(newCharacter.starships[0].name).toBe('X-wing')
+
+        newCharacter = setIn(newCharacter, 'starships[1].length', 20)
+        expect(newCharacter.starships[1].length).toBe(20)
+
+        const newStarship = {
+            name: 'Imperial shuttle',
+            length: 20,
+            cargo_capacity: 80000
+        }
+        const newStarships = setIn(starships, '[3]', newStarship)
+        expect(newStarships[3]).toBe(newStarship)
     })
 })
