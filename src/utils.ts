@@ -47,13 +47,34 @@ export type ValueIn<T, P extends PathOf<T>> = SplitPath<P> extends [infer P1, in
             : never
     : never
 
-const ARRAY_KEY_REGEX = /^\[(\d+)\]$/
-const NON_LEADING_ARRAY_KEY_REGEX = /(?!^)\[\d+\]/g
+const ARRAY_KEY_REGEX = /\[(\d+)\]/
+const OBJECT_KEY_REGEX = /\.(.*)/
 
 export function getIn<T, P extends PathOf<T>>(object: T, path: P): ValueIn<T, P> {
-    return split(path).reduce<any>((result, key) => result[key.match(ARRAY_KEY_REGEX)?.[1] || key], object)
+    const [p1, p2] = splitPath(path)
+    const { key } = parseSegment(p1)
+    const value = object[key as keyof T]
+    return p2 ? getIn(value, p2 as PathOf<T[keyof T]>) : value as ValueIn<T, P>
 }
 
-function split(path: string) {
-    return path.replace(NON_LEADING_ARRAY_KEY_REGEX, p => '.' + p).split('.')
+function splitPath<P extends string>(path: P) {
+    const [p1, p2] = path.split(OBJECT_KEY_REGEX)
+    const [c1, c2] = splitArrayPath(p1)
+    if (!p2) return [c1, c2]
+    return [c1, [c2, p2].filter(Boolean).join('.')]
+}
+
+function splitArrayPath<P extends string>(path: P) {
+    const match = path.match(ARRAY_KEY_REGEX)
+    if (!match) return [path, '']
+    if (match.index === 0) return [match[0], path.slice(match[0].length)]
+    return [path.slice(0, match.index), path.slice(match.index)]
+}
+
+function parseSegment<S extends string>(segment: S) {
+    const match = segment.match(ARRAY_KEY_REGEX)
+    return {
+        key: match?.[1] || segment,
+        isArray: !!match
+    }
 }
